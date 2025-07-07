@@ -73,14 +73,21 @@ app.get("/", (req, res) => {
 app.post("/api/checkout", async (req, res) => {
   try {
     const { customer, products } = req.body;
+    console.log("📦 Incoming Order:", customer, products);
+
     const orderId = await getNextOrderId();
+    console.log("🆔 Generated Order ID:", orderId);
 
     const order = new Order({ orderId, customer, products });
     await order.save();
+    console.log("✅ Order saved to DB");
 
     const pdfPath = `invoice_${orderId}.pdf`;
     await generatePDFInvoice(order, pdfPath);
+    console.log("📄 PDF invoice created:", pdfPath);
+
     await sendInvoiceEmail(customer.email, pdfPath, orderId);
+    console.log("✉️ Invoice email sent");
 
     res.json({ success: true });
 
@@ -88,11 +95,10 @@ app.post("/api/checkout", async (req, res) => {
       fs.unlink(pdfPath, () => {});
     }, 60000);
   } catch (err) {
-    console.error("❌ Error:", err);
-    res.status(500).json({ success: false });
+    console.error("❌ Error in checkout:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 
 function generatePDFInvoice(order, filePath) {
