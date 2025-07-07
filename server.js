@@ -96,49 +96,80 @@ app.post("/api/checkout", async (req, res) => {
 function generatePDFInvoice(order, filePath) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 30, size: "A4", autoFirstPage: true });
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+    const marginBottom = 30;
+    const lineHeight = 15;
+    const columnWidths = [30, 200, 60, 60, 60];
+    let y = 30;
+    const currentDate = new Date(order.date).toLocaleDateString("en-IN");
 
-    // 🛑 Try to use font only if file exists
+    // Font
     const fontPath = path.join(__dirname, "public", "fonts", "NotoSans-Regular.ttf");
     if (fs.existsSync(fontPath)) {
       doc.registerFont("Noto", fontPath);
       doc.font("Noto");
     } else {
-      doc.font("Helvetica"); // fallback
+      doc.font("Helvetica");
     }
 
-    // Header
-    doc.rect(0, 0, doc.page.width, 100).fill("#0b3f91");
-    try {
-      const logoPath = path.join(__dirname, "public", "assets", "img", "logobg.png");
-      doc.image(logoPath, doc.page.width - 110, 15, { width: 80 });
-    } catch (err) {
-      console.log("⚠️ Logo missing");
+    // HEADER
+    function drawHeader(isFirstPage) {
+      y = isFirstPage ? 30 : 20;
+      doc.fontSize(16).font("Helvetica-Bold").text("KUTTY PATTAS", 30, y);
+      doc.fontSize(12).font("Helvetica").text("Invoice", pageWidth - 100, y);
+
+      y += 15;
+      doc.fontSize(10)
+        .text("GSTIN No: XXXXXXXXXXXXXX", 30, y)
+        .text("3/267-D Aj polytechnic opp,", 30, y += 10)
+        .text("Chinnakamanpatti, Sivakasi - 626189", 30, y += 10)
+        .text("Phone: +91 80153 25450 / +91 94420 38077", 30, y += 10)
+        .text("Email: kuttypattascrackers@gmail.com", 30, y += 10)
+        .text(`Order Date: ${currentDate}`, pageWidth - 150, y - 20)
+        .text(`Invoice No: INV-${order.orderId}`, pageWidth - 150, y - 10);
+
+      y += 10;
+      doc.moveTo(30, y).lineTo(pageWidth - 30, y).stroke();
     }
 
-    doc.fillColor("#fff").fontSize(22).font("Helvetica-Bold").text("INVOICE", 30, 35);
+    // FOOTER
+    function drawFooter(pageNum, totalPages) {
+      const footerY = pageHeight - marginBottom;
+      doc.moveTo(30, footerY).lineTo(pageWidth - 30, footerY).stroke();
+      doc.fontSize(10).fillColor("#000")
+        .text("Thank you for your business!", pageWidth / 2, footerY + 5, { align: "center" })
+        .text(`Page ${pageNum} of ${totalPages}`, pageWidth - 100, footerY + 5);
+    }
 
-    // Address
-    let y = 120;
-    doc.fillColor("#000").fontSize(12).font("Helvetica-Bold").text("Bill To:", 30, y);
-    doc.font("Helvetica")
-      .text(order.customer.name, 30)
-      .text(order.customer.phone, 30)
-      .text(order.customer.address, 30)
-      .text(`Pincode: ${order.customer.pincode}`, 30);
+    // TABLE HEADER
+    function drawTableHeader(startY) {
+      doc.fontSize(10).font("Helvetica-Bold")
+        .text("S.No", 30, startY)
+        .text("Description", 60, startY)
+        .text("Qty", 270, startY, { width: 40, align: "center" })
+        .text("Price", 330, startY, { width: 60, align: "center" })
+        .text("Total", 410, startY, { width: 60, align: "center" });
 
-    doc.font("Helvetica-Bold").text("From:", 330, y);
-    doc.font("Helvetica")
-      .text("KGM Crackers", 330)
-      .text("7904303676", 330)
-      .text("6/7491-A, Samy Puram Colony, Sivakasi", 330);
+      doc.moveTo(30, startY + 12).lineTo(pageWidth - 30, startY + 12).stroke();
+      return startY + 20;
+    }
 
-    y = doc.y + 20;
-    doc.text(`Date: ${new Date(order.date).toLocaleDateString("en-IN")}    Invoice No: INV-${order.orderId}`, 30, y);
+    drawHeader(true);
 
-    // Table header
-    y = doc.y + 30;
-    addTableHeader(doc, y);
-    y += 25;
+    // BILL TO
+    y += 15;
+    doc.font("Helvetica-Bold").text("Billed To:", 30, y);
+    doc.font("Helvetica").fontSize(10)
+      .text(`Name: ${order.customer.name}`, 30, y += 10)
+      .text(`Address: ${order.customer.address}`, 30, y += 10)
+      .text(`Pincode: ${order.customer.pincode}`, 30, y += 10)
+      .text(`Phone: ${order.customer.phone}`, 30, y += 10)
+      .text(`Email: ${order.customer.email || "-"}`, 30, y += 10);
+
+    // TABLE CONTENT
+    y += 20;
+    y = drawTableHeader(y);
 
     let totalAmount = 0;
     let sno = 1;
@@ -147,48 +178,93 @@ function generatePDFInvoice(order, filePath) {
       const amount = item.price * item.qty;
       totalAmount += amount;
 
-      if (y > doc.page.height - 150) {
-        addFooter(doc, doc.page.index + 1, null);
+      const textHeight = 15;
+      if (y + textHeight > pageHeight - marginBottom - 50) {
+        drawFooter(doc.page.index + 1, null);
         doc.addPage();
-        y = 30;
-        addTableHeader(doc, y);
-        y += 25;
+        drawHeader(false);
+        y = drawTableHeader(30);
       }
 
-      doc.font("Helvetica").fillColor("#000")
-        .text(sno, 35, y)
-        .text(item.name, 65, y, { width: 240 })
-        .text(item.qty.toString(), 320, y, { width: 40, align: "center" })
-        .text(`₹${item.price.toFixed(2)}`, 370, y, { width: 60, align: "center" })
-        .text(`₹${amount.toFixed(2)}`, 440, y, { width: 60, align: "center" });
+      doc.font("Helvetica").fontSize(10)
+        .text(sno, 30, y)
+        .text(item.name, 60, y)
+        .text(item.qty.toString(), 270, y, { width: 40, align: "center" })
+        .text(`₹${item.price.toFixed(2)}`, 330, y, { width: 60, align: "center" })
+        .text(`₹${amount.toFixed(2)}`, 410, y, { width: 60, align: "center" });
 
-      y += 20;
+      y += textHeight;
       sno++;
     }
 
-    // Subtotal
-    doc.rect(370, y + 10, 130, 20).fill("#0b3f91");
-    doc.fillColor("#fff")
-      .font("Helvetica-Bold")
-      .text("Sub Total", 375, y + 15)
-      .text(`₹${totalAmount.toFixed(2)}`, 460, y + 15, { align: "right", width: 40 });
+    // TOTAL
+    y += 10;
+    doc.font("Helvetica-Bold").fontSize(12)
+      .text(`Total Amount: ₹${totalAmount.toFixed(2)}`, pageWidth / 2 - 60, y);
 
-    // Signature
-    doc.moveDown(5);
-    doc.fillColor("#000").font("Helvetica-Bold").text("Authorized Signature", doc.page.width - 200, doc.y + 30);
+    drawFooter(doc.page.index + 1, null);
 
-    // Footer on all pages
+    // BANK DETAILS PAGE
+    doc.addPage();
+    drawHeader(true);
+
+    doc.font("Helvetica-Bold").fontSize(14).text("Banking and Payment Details", pageWidth / 2, 60, { align: "center" });
+
+    const banks = [
+      { name: "SBI", accountNo: "35950968662", ifsc: "SBIN0000961", branch: "Sivakasi" }
+    ];
+
+    y = 90;
+    doc.fontSize(10).font("Helvetica-Bold")
+      .text("Bank", 30, y)
+      .text("Account No", 120, y)
+      .text("Branch", 240, y)
+      .text("IFSC", 350, y);
+    y += 10;
+
+    banks.forEach(bank => {
+      doc.font("Helvetica").text(bank.name, 30, y)
+        .text(bank.accountNo, 120, y)
+        .text(bank.branch, 240, y)
+        .text(bank.ifsc, 350, y);
+      y += 15;
+    });
+
+    y += 30;
+    doc.font("Helvetica-Bold").fontSize(14).text("Any Queries?", pageWidth / 2, y, { align: "center" });
+    y += 20;
+
+    doc.fontSize(12).font("Helvetica")
+      .text("If you have any questions about this invoice, please contact us at:", 30, y)
+      .text("Phone(GPay): +91 8015325450", 30, y + 15)
+      .text("Phone: +91 9442038077", 30, y + 30)
+      .text("Email: kuttypattascrackers@gmail.com", 30, y + 45);
+
+    // QUOTE
+    y += 75;
+    doc.fontSize(14).font("Helvetica-Bold").text("Quote of the Day", pageWidth / 2, y, { align: "center" });
+
+    const quote = "“You deserve the best, and we're here to deliver it every time!”";
+    const author = "- Kutty Pattas Team";
+
+    doc.fontSize(12).font("Times-Italic")
+      .text(quote, pageWidth / 2, y + 20, { align: "center" })
+      .text(author, pageWidth / 2, y + 35, { align: "center" });
+
+    // FOOTERS FOR ALL PAGES
     const totalPages = doc.bufferedPageRange().count;
     for (let i = 0; i < totalPages; i++) {
       doc.switchToPage(i);
-      addFooter(doc, i + 1, totalPages);
+      drawFooter(i + 1, totalPages);
     }
 
+    // Finish
     doc.pipe(fs.createWriteStream(filePath));
     doc.end();
     resolve();
   });
 }
+
 
 function addTableHeader(doc, y) {
   doc.rect(30, y, doc.page.width - 60, 20).fill("#0b3f91");
