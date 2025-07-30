@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const fetch = require('node-fetch');
 const bodyParser = require("body-parser");
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
@@ -191,30 +190,9 @@ async function generatePDFInvoice(order, filePath) {
 };
 
 
-  // Load logo image
-const logoImageBytes = await fetch('https://i.postimg.cc/7hnmxS3j/logcrt.png').then(res => res.arrayBuffer());
-const logoImage = await pdfDoc.embedPng(logoImageBytes);
-const logoDims = logoImage.scale(0.5);
-
-// Position
-const logoX = margin; // instead of centering
-const logoY = y - logoDims.height + 5;
-
-// Draw logo
-page.drawImage(logoImage, {
-  x: logoX,
-  y: logoY,
-  width: logoDims.width,
-  height: logoDims.height,
-});
-
-// Draw title
-drawText('KGM INVOICE', logoX + logoDims.width + 20, y, {
-  font: boldFont,
-  size: 18,
-});
-
-
+  // Title
+  drawText('KGM INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
+  y -= lineHeight * 2;
 
   // Billing Info
   const boxWidth = (pageWidth - 2 * margin - 10) / 2; // Slightly more width
