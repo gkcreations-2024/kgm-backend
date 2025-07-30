@@ -165,7 +165,7 @@ async function generatePDFInvoice(order, filePath) {
     height: rowHeight,
     color: rgb(0.2, 0.45, 0.75),
     borderWidth: 1,
-    borderColor: rgb(0.8, 0.8, 0.8),
+    borderColor: rgb(0, 0, 0),
   });
 
   const text = headers[j];
@@ -263,7 +263,7 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
     width: widths[j],
     height: rowHeight,
     borderWidth: 1,
-    borderColor: rgb(0.8, 0.8, 0.8),
+    borderColor: rgb(0, 0, 0),
   });
 
   const text = values[j];
@@ -300,7 +300,7 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
     width: 180,
     height: rowHeight,
     borderWidth: 1,
-    borderColor: rgb(0.8, 0.8, 0.8),
+    borderColor: rgb(0, 0, 0),
   });
   drawText('Subtotal', margin + 345, y - 8, { font: boldFont });
   drawText(`₹${totalAmount.toFixed(2)}`, margin + 430, y - 8, { font: boldFont });
