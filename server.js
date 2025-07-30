@@ -157,7 +157,7 @@ async function generatePDFInvoice(order, filePath) {
   const headerHeight = rowHeight;
   const fontSize = 10;
 
-  for (let j = 0; j < values.length; j++) {
+  for (let j = 0; j < headers.length; j++) {
   page.drawRectangle({
     x: positions[j],
     y: y - rowHeight,
@@ -167,7 +167,7 @@ async function generatePDFInvoice(order, filePath) {
     borderColor: rgb(0.8, 0.8, 0.8),
   });
 
-  const text = values[j];
+  const text = headers[j];
   const fontSize = 10;
   const textWidth = font.widthOfTextAtSize(text, fontSize);
   const textHeight = font.heightAtSize(fontSize); // Add this
