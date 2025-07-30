@@ -297,18 +297,13 @@ if (y - rowHeight < margin + 80) {
 }
 
 
-  // Subtotal Box
- // Adjust y only once
-y = 20;
-
-// Draw line above the subtotal box (optional if needed)
-drawLine(y);
-
+ // Set dimensions and position
 const boxX = margin + 340;
-const boxY = y - rowHeight;
+const boxY = y - 20; // Adjusted to place the box lower
 const width = 180;
-const height = rowHeight;
+const height = 25; // Standard height for subtotal box
 
+// Draw the rectangle for subtotal
 page.drawRectangle({
   x: boxX,
   y: boxY,
@@ -318,18 +313,23 @@ page.drawRectangle({
   borderColor: rgb(0, 0, 0),
 });
 
+// Get font size for vertical centering
+const fontSize = 12;
+const textYCentered = boxY + (height / 2) - (fontSize / 2) + 2; // small tweak
 
-// Vertically center the text
-const textYOffset = 20; // Adjust this if needed based on font size
-
-drawText('Subtotal', boxX + 5, boxY + textYOffset, {
+// Draw the subtotal text
+drawText('Subtotal', boxX + 8, textYCentered, {
   font: boldFont,
+  size: fontSize,
   color: rgb(0, 0, 0),
 });
-drawText(`₹${totalAmount.toFixed(2)}`, boxX + 90, boxY + textYOffset, {
+
+drawText(`₹${totalAmount.toFixed(2)}`, boxX + 100, textYCentered, {
   font: boldFont,
+  size: fontSize,
   color: rgb(0, 0, 0),
 });
+
 
   // Signature
   y -= lineHeight * 3;
