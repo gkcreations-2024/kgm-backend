@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const fetch = require('node-fetch');
 const bodyParser = require("body-parser");
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
@@ -191,7 +192,6 @@ async function generatePDFInvoice(order, filePath) {
 
 
   // Load logo image
-const fetch = require('node-fetch');
 const logoImageBytes = await fetch('https://i.postimg.cc/7hnmxS3j/logcrt.png').then(res => res.arrayBuffer());
 const logoImage = await pdfDoc.embedPng(logoImageBytes);
 const logoDims = logoImage.scale(0.15);
