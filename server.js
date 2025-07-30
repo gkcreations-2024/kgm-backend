@@ -163,7 +163,7 @@ async function generatePDFInvoice(order, filePath) {
     y: y - rowHeight,
     width: widths[j],
     height: rowHeight,
-    color: rgb(0.9, 0.9, 0.9),
+    color: rgb(0.2, 0.45, 0.75),
     borderWidth: 1,
     borderColor: rgb(0.8, 0.8, 0.8),
   });
@@ -256,37 +256,34 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
   const widths = [40, 240, 60, 90, 90];
 
   for (let j = 0; j < values.length; j++) {
-    // Draw cell rectangle
-    page.drawRectangle({
-      x: positions[j],
-      y: y - rowHeight,
-      width: widths[j],
-      height: rowHeight,
-      borderWidth: 1,
-      borderColor: rgb(0.8, 0.8, 0.8),
-    });
+  page.drawRectangle({
+    x: positions[j],
+    y: y - rowHeight,
+    width: widths[j],
+    height: rowHeight,
+    borderWidth: 1,
+    borderColor: rgb(0.8, 0.8, 0.8),
+  });
 
-    const text = values[j];
-    const fontSize = 10;
-    const textWidth = font.widthOfTextAtSize(text, fontSize);
-    const textHeight = font.heightAtSize(fontSize);
+  const text = values[j];
+  const fontSize = 10;
+  const textWidth = font.widthOfTextAtSize(text, fontSize);
+  const textHeight = font.heightAtSize(fontSize);
+  const centerY = y - (rowHeight / 2) - (textHeight / 4);
+  let textX;
 
-    // Horizontal alignment
-    let textX;
-    if (j === 1) {
-      // Description: center-align instead of left-align
-      const centerX = positions[j] + widths[j] / 2;
-      textX = centerX - textWidth / 2;
-    } else {
-      const centerX = positions[j] + widths[j] / 2;
-      textX = centerX - textWidth / 2;
-    }
-
-    // ✅ Vertical centering
-    const textY = y - (rowHeight / 2) - (textHeight / 4);
-
-    drawText(text, textX, textY, { font, size: fontSize });
+  if (j === 1) {
+    // Description: left-align + vertical center
+    textX = positions[j] + 4;
+  } else {
+    // Center-align horizontally
+    const centerX = positions[j] + widths[j] / 2;
+    textX = centerX - textWidth / 2;
   }
+
+  drawText(text, textX, centerY, { font, size: fontSize });
+}
+
 
   y -= rowHeight;
 }
