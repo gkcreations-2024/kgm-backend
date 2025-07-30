@@ -157,38 +157,51 @@ async function generatePDFInvoice(order, filePath) {
   const headerHeight = rowHeight;
   const fontSize = 10;
 
- for (let j = 0; j < values.length; j++) {
-  // Draw cell box
-  page.drawRectangle({
-    x: positions[j],
-    y: y - rowHeight,
-    width: widths[j],
-    height: rowHeight,
-    borderWidth: 1,
-    borderColor: rgb(0.8, 0.8, 0.8),
-  });
 
-  const text = values[j];
-  const fontSize = 10;
-  const textWidth = font.widthOfTextAtSize(text, fontSize);
-  const textHeight = font.heightAtSize(fontSize); // important for vertical centering
+ order.items.forEach((item, index) => {
+  const values = [
+    String(index + 1),        // S.No
+    item.name,                // Description
+    String(item.qty),         // Qty
+    item.price.toFixed(2),    // Price (₹)
+    (item.qty * item.price).toFixed(2), // Total (₹)
+  ];
 
-  // Horizontal alignment
-  let textX;
-  if (j === 1) {
-    // Description: left align with padding
-    textX = positions[j] + 4;
-  } else {
-    // Center align
-    const centerX = positions[j] + widths[j] / 2;
-    textX = centerX - textWidth / 2;
+  for (let j = 0; j < values.length; j++) {
+    // Draw cell box
+    page.drawRectangle({
+      x: positions[j],
+      y: y - rowHeight,
+      width: widths[j],
+      height: rowHeight,
+      borderWidth: 1,
+      borderColor: rgb(0.8, 0.8, 0.8),
+    });
+
+    const text = values[j];
+    const fontSize = 10;
+    const textWidth = font.widthOfTextAtSize(text, fontSize);
+    const textHeight = font.heightAtSize(fontSize);
+
+    // Horizontal alignment
+    let textX;
+    if (j === 1) {
+      // Description column: left-align
+      textX = positions[j] + 4;
+    } else {
+      const centerX = positions[j] + widths[j] / 2;
+      textX = centerX - textWidth / 2;
+    }
+
+    // Vertical centering
+    const textY = y - (rowHeight / 2) - (textHeight / 4);
+
+    drawText(text, textX, textY, { font, size: fontSize });
   }
 
-  // ✅ Vertically center text
-  const textY = y - (rowHeight / 2) - (textHeight / 4); // fine-tuned center
+  y -= rowHeight;
+});
 
-  drawText(text, textX, textY, { font, size: fontSize });
-}
 
 
 
