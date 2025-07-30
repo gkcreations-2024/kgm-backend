@@ -192,15 +192,25 @@ async function generatePDFInvoice(order, filePath) {
   // Left (Bill To)
   drawText('Bill To:', leftX, y, { font: boldFont });
   y -= lineHeight;
-  const addressLines = splitText(order.customer.address, 70);
-const spacedAddressLines = addressLines.flatMap(line => [line, '']);
+ const addressLines = splitText(order.customer.address, 70);
+
+// Add a blank line **only between** address lines (not after the last one)
+const spacedAddressLines = [];
+for (let i = 0; i < addressLines.length; i++) {
+  spacedAddressLines.push(addressLines[i]);
+  if (i < addressLines.length - 1) {
+    spacedAddressLines.push(''); // adds blank line *only between*, not at end
+  }
+}
+
   const leftLines = [
-    `${order.customer.name}`,
-    `${order.customer.phone}`,
-    ...spacedAddressLines, // Widened for better layout
-    `Pincode: ${order.customer.pincode}`,
-    `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
-  ];
+  `${order.customer.name}`,
+  `${order.customer.phone}`,
+  ...spacedAddressLines,
+  `Pincode: ${order.customer.pincode}`,
+  `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
+];
+
   leftLines.forEach(line => {
     drawText(line, leftX, y);
     y -= lineHeight;
