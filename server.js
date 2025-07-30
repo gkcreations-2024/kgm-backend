@@ -96,8 +96,10 @@ app.post("/api/checkout", async (req, res) => {
 async function generatePDFInvoice(order, filePath) {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fontBytes = fs.readFileSync(path.join(__dirname, "fonts", "NotoSans-Regular.ttf"));
+const font = await pdfDoc.embedFont(fontBytes);
+const boldFont = font; // Or use a bold version if you have one
+
 
   const pageWidth = 595;
   const pageHeight = 842;
