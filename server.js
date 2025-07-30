@@ -194,10 +194,10 @@ async function generatePDFInvoice(order, filePath) {
   // Load logo image
 const logoImageBytes = await fetch('https://i.postimg.cc/7hnmxS3j/logcrt.png').then(res => res.arrayBuffer());
 const logoImage = await pdfDoc.embedPng(logoImageBytes);
-const logoDims = logoImage.scale(0.15);
+const logoDims = logoImage.scale(0.5);
 
 // Position
-const logoX = pageWidth / 2 - 100;
+const logoX = margin; // instead of centering
 const logoY = y - logoDims.height + 5;
 
 // Draw logo
@@ -209,10 +209,11 @@ page.drawImage(logoImage, {
 });
 
 // Draw title
-drawText('KGM INVOICE', logoX + logoDims.width + 10, y, {
+drawText('KGM INVOICE', logoX + logoDims.width + 20, y, {
   font: boldFont,
   size: 18,
 });
+
 
 
   // Billing Info
