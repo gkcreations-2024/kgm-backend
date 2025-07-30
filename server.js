@@ -163,6 +163,7 @@ async function generatePDFInvoice(order, filePath) {
     y: y - rowHeight,
     width: widths[j],
     height: rowHeight,
+    color: rgb(0.9, 0.9, 0.9),
     borderWidth: 1,
     borderColor: rgb(0.8, 0.8, 0.8),
   });
