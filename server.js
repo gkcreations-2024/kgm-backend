@@ -197,6 +197,7 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
   const leftLines = [
     `${order.customer.name}`,
     `${order.customer.phone}`,
+    ...spacedAddressLines, // Widened for better layout
     `Pincode: ${order.customer.pincode}`,
     `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
   ];
