@@ -299,7 +299,7 @@ if (y - rowHeight < margin + 80) {
 
   // Subtotal Box
  // Adjust y only once
-y -= 10;
+y -= 20;
 
 // Draw line above the subtotal box (optional if needed)
 drawLine(y);
