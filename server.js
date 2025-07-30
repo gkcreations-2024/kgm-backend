@@ -196,34 +196,47 @@ async function generatePDFInvoice(order, filePath) {
   drawText('INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
   y -= lineHeight * 2;
 
-  // Boxed Billing Info
-  const boxHeight = 80;
-  const leftBoxY = y;
-  const boxWidth = (pageWidth - 2 * margin - 20) / 2;
-  const leftX = margin;
-  const rightX = leftX + boxWidth + 20;
+  // Billing Info without box
+const boxHeight = 80;
+const boxWidth = (pageWidth - 2 * margin - 20) / 2;
+const leftX = margin;
+const rightX = leftX + boxWidth + 20;
+const initialY = y;
 
-  const leftAddress = [
-    `Bill To:`,
-    `${order.customer.name}`,
-    `${order.customer.phone}`,
-    ...splitText(order.customer.address, 45),
-    `Pincode: ${order.customer.pincode}`,
-    `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
-  ].join('\n');
+// Left (Bill To)
+drawText('Bill To:', leftX, y, { font: boldFont });
+y -= lineHeight;
+const leftLines = [
+  `${order.customer.name}`,
+  `${order.customer.phone}`,
+  ...splitText(order.customer.address, 45),
+  `Pincode: ${order.customer.pincode}`,
+  `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
+];
+leftLines.forEach(line => {
+  drawText(line, leftX, y);
+  y -= lineHeight;
+});
 
-  const rightAddress = [
-    `From:`,
-    `K.G.M. TRADERS`,
-    `+91 86678 48501`,
-    ...splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', 45),
-    `Pincode: 626189`,
-    `Invoice No: INV-${order.orderId}`,
-  ].join('\n');
+// Reset Y for Right (From)
+let rightY = initialY;
+drawText('From:', rightX, rightY, { font: boldFont });
+rightY -= lineHeight;
+const rightLines = [
+  `K.G.M. TRADERS`,
+  `+91 86678 48501`,
+  ...splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', 45),
+  `Pincode: 626189`,
+  `Invoice No: INV-${order.orderId}`,
+];
+rightLines.forEach(line => {
+  drawText(line, rightX, rightY);
+  rightY -= lineHeight;
+});
 
-  drawBoxedText(page, leftAddress, leftX, y, boxWidth, boxHeight, font);
-  drawBoxedText(page, rightAddress, rightX, y, boxWidth, boxHeight, font);
-  y -= boxHeight + 10;
+// Move Y to the lower of both columns
+y = Math.min(y, rightY) - 10;
+
 
   drawTableHeader();
 
