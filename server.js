@@ -157,9 +157,7 @@ async function generatePDFInvoice(order, filePath) {
   const headerHeight = rowHeight;
   const fontSize = 10;
 
-  
- for (let j = 0; j < values.length; j++) {
-  // Draw cell box
+  for (let j = 0; j < values.length; j++) {
   page.drawRectangle({
     x: positions[j],
     y: y - rowHeight,
@@ -172,25 +170,23 @@ async function generatePDFInvoice(order, filePath) {
   const text = values[j];
   const fontSize = 10;
   const textWidth = font.widthOfTextAtSize(text, fontSize);
-  const textHeight = font.heightAtSize(fontSize); // important for vertical centering
+  const textHeight = font.heightAtSize(fontSize); // Add this
 
-  // Horizontal alignment
   let textX;
   if (j === 1) {
-    // Description: left align with padding
+    // Description: left-align
     textX = positions[j] + 4;
   } else {
-    // Center align
+    // Center-align horizontally
     const centerX = positions[j] + widths[j] / 2;
     textX = centerX - textWidth / 2;
   }
 
-  // ✅ Vertically center text
-  const textY = y - (rowHeight / 2) - (textHeight / 4); // fine-tuned center
+  // ✅ Vertically center
+  const textY = y - (rowHeight / 2) - (textHeight / 4);
 
   drawText(text, textX, textY, { font, size: fontSize });
 }
-
 
 
   y -= headerHeight;
