@@ -157,37 +157,34 @@ async function generatePDFInvoice(order, filePath) {
   const headerHeight = rowHeight;
   const fontSize = 10;
 
-  for (let j = 0; j < headers.length; j++) {
-  page.drawRectangle({
-    x: positions[j],
-    y: y - rowHeight,
-    width: widths[j],
-    height: rowHeight,
-    color: rgb(0.9, 0.9, 0.9),
-    borderWidth: 1,
-    borderColor: rgb(0.8, 0.8, 0.8),
-  });
+  for (let i = 0; i < headers.length; i++) {
+    // Draw cell background
+    page.drawRectangle({
+      x: positions[i],
+      y: y - headerHeight,
+      width: widths[i],
+      height: headerHeight,
+      color: rgb(0.09, 0.27, 0.47),
+      borderWidth: 1,
+      borderColor: rgb(0.2, 0.2, 0.2),
+    });
 
-  const text = headers[j];
-  const fontSize = 10;
-  const textWidth = font.widthOfTextAtSize(text, fontSize);
-  const textHeight = font.heightAtSize(fontSize); // Add this
+    // Center-align text horizontally
+    const text = headers[i];
+    const textWidth = boldFont.widthOfTextAtSize(text, fontSize);
+    const cellCenterX = positions[i] + widths[i] / 2;
+    const textX = cellCenterX - textWidth / 2;
 
-  let textX;
-  if (j === 1) {
-    // Description: left-align
-    textX = positions[j] + 4;
-  } else {
-    // Center-align horizontally
-    const centerX = positions[j] + widths[j] / 2;
-    textX = centerX - textWidth / 2;
+    // Center-align text vertically
+    const textHeight = boldFont.heightAtSize(fontSize);
+    const textY = y - (headerHeight / 2) - (textHeight / 4);  // Vertically centered
+
+    drawText(text, textX, textY, { font: boldFont, size: fontSize, color: rgb(1, 1, 1) });
   }
-  // ✅ Vertically center
-  const textY = y - (rowHeight / 2) - (textHeight / 4);
-  drawText(text, textX, textY, { font, size: fontSize });
-}
+
   y -= headerHeight;
 };
+
 
 
   // Title
