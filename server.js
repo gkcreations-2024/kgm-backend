@@ -255,7 +255,8 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
   const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
   const widths = [40, 240, 60, 90, 90];
 
-  for (let j = 0; j < values.length; j++) {
+ for (let j = 0; j < values.length; j++) {
+  // Draw cell rectangle
   page.drawRectangle({
     x: positions[j],
     y: y - rowHeight,
@@ -269,20 +270,21 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
   const fontSize = 10;
   const textWidth = font.widthOfTextAtSize(text, fontSize);
   const textHeight = font.heightAtSize(fontSize);
-  const centerY = y - (rowHeight / 2) - (textHeight / 4);
+  const textY = y - (rowHeight / 2) - (textHeight / 4);
   let textX;
 
   if (j === 1) {
-    // Description: left-align + vertical center
+    // ✅ LEFT-align for Description
     textX = positions[j] + 4;
   } else {
-    // Center-align horizontally
+    // ✅ Center-align horizontally
     const centerX = positions[j] + widths[j] / 2;
     textX = centerX - textWidth / 2;
   }
 
-  drawText(text, textX, centerY, { font, size: fontSize });
+  drawText(text, textX, textY, { font, size: fontSize });
 }
+
 
 
   y -= rowHeight;
