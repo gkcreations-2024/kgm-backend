@@ -92,16 +92,26 @@ app.post("/api/checkout", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-function splitText(text, maxLen) {
-  const lines = [];
-  while (text.length > maxLen) {
-    let splitAt = text.lastIndexOf(' ', maxLen);
-    if (splitAt === -1) splitAt = maxLen;
-    lines.push(text.substring(0, splitAt));
-    text = text.substring(splitAt).trim();
+function drawBoxedText(page, text, x, y, width, height, font, fontSize = 10) {
+  page.drawRectangle({
+    x, y: y - height,
+    width, height,
+    borderColor: rgb(0.7, 0.7, 0.7),
+    borderWidth: 1,
+  });
+
+  const lines = splitText(text, 40);
+  let offsetY = y - fontSize - 4;
+  for (const line of lines) {
+    page.drawText(line, {
+      x: x + 5,
+      y: offsetY,
+      size: fontSize,
+      font,
+      color: rgb(0, 0, 0),
+    });
+    offsetY -= fontSize + 2;
   }
-  lines.push(text);
-  return lines;
 }
 
 async function generatePDFInvoice(order, filePath) {
@@ -116,7 +126,7 @@ async function generatePDFInvoice(order, filePath) {
   const pageHeight = 842;
   const margin = 40;
   const lineHeight = 20;
-  const rowHeight = 20;
+  const rowHeight = 24;
 
   let page = pdfDoc.addPage([pageWidth, pageHeight]);
   let y = pageHeight - margin;
@@ -151,59 +161,58 @@ async function generatePDFInvoice(order, filePath) {
   };
 
   const drawTableHeader = () => {
-    const bgHeight = rowHeight + 4;
-    page.drawRectangle({
-      x: margin,
-      y: y - 2,
-      width: pageWidth - 2 * margin,
-      height: bgHeight,
-      color: rgb(0.09, 0.27, 0.47), // dark blue
-    });
+    const headers = ['S.No', 'Description', 'Qty', 'Price (₹)', 'Total (₹)'];
+    const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
+    const widths = [40, 240, 60, 90, 90];
+    const headerHeight = rowHeight;
 
-    drawText('S.No', margin + 2, y, { font: boldFont, color: rgb(1, 1, 1) });
-    drawText('Description', margin + 40, y, { font: boldFont, color: rgb(1, 1, 1) });
-    drawText('Qty', margin + 270, y, { font: boldFont, color: rgb(1, 1, 1) });
-    drawText('Price (₹)', margin + 340, y, { font: boldFont, color: rgb(1, 1, 1) });
-    drawText('Total (₹)', margin + 430, y, { font: boldFont, color: rgb(1, 1, 1) });
-
-    y -= bgHeight;
+    for (let i = 0; i < headers.length; i++) {
+      page.drawRectangle({
+        x: positions[i],
+        y: y - headerHeight,
+        width: widths[i],
+        height: headerHeight,
+        color: rgb(0.09, 0.27, 0.47),
+        borderWidth: 1,
+        borderColor: rgb(0.2, 0.2, 0.2),
+      });
+      drawText(headers[i], positions[i] + 4, y - 8, { font: boldFont, color: rgb(1, 1, 1) });
+    }
+    y -= headerHeight;
   };
 
   // Title
   drawText('INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
   y -= lineHeight * 2;
 
-  // Customer & Seller Info Side-by-Side
+  // Boxed Billing Info
+  const boxHeight = 80;
+  const leftBoxY = y;
+  const boxWidth = (pageWidth - 2 * margin - 20) / 2;
   const leftX = margin;
-  const rightX = pageWidth / 2 + 10;
-  drawText('Bill To:', leftX, y, { font: boldFont });
-  drawText('From:', rightX, y, { font: boldFont });
-  y -= lineHeight;
-  drawText(order.customer.name, leftX, y);
-  drawText('K.G.M. TRADERS', rightX, y);
-  y -= lineHeight;
-  drawText(order.customer.phone, leftX, y);
-  drawText('+91 86678 48501', rightX, y);
-  y -= lineHeight;
-  // Break long address into 2 lines if needed
-const leftAddressLines = splitText(order.customer.address, 35); // max ~35 characters
-const rightAddressLines = splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', 35);
+  const rightX = leftX + boxWidth + 20;
 
-// Draw addresses (multi-line safe)
-for (let i = 0; i < Math.max(leftAddressLines.length, rightAddressLines.length); i++) {
-  if (leftAddressLines[i]) drawText(leftAddressLines[i], leftX, y);
-  if (rightAddressLines[i]) drawText(rightAddressLines[i], rightX, y);
-  y -= lineHeight;
-}
+  const leftAddress = [
+    `Bill To:`,
+    `${order.customer.name}`,
+    `${order.customer.phone}`,
+    ...splitText(order.customer.address, 45),
+    `Pincode: ${order.customer.pincode}`,
+    `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
+  ].join('\n');
 
- drawText(`Pincode: ${order.customer.pincode}`, leftX, y);
-drawText('Pincode: 626189', rightX, y);
-y -= lineHeight;
+  const rightAddress = [
+    `From:`,
+    `K.G.M. TRADERS`,
+    `+91 86678 48501`,
+    ...splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', 45),
+    `Pincode: 626189`,
+    `Invoice No: INV-${order.orderId}`,
+  ].join('\n');
 
-drawText(`Date: ${new Date(order.date).toLocaleDateString('en-IN')}`, leftX, y);
-drawText(`Invoice No: INV-${order.orderId}`, rightX, y);
-y -= lineHeight * 2;
-
+  drawBoxedText(page, leftAddress, leftX, y, boxWidth, boxHeight, font);
+  drawBoxedText(page, rightAddress, rightX, y, boxWidth, boxHeight, font);
+  y -= boxHeight + 10;
 
   drawTableHeader();
 
@@ -212,23 +221,47 @@ y -= lineHeight * 2;
     const item = order.products[i];
     const amount = item.qty * item.price;
     totalAmount += amount;
-
     addPageIfNeeded();
 
-    drawText((i + 1).toString(), margin + 2, y);
-    drawText(item.name, margin + 40, y);
-    drawText(item.qty.toString(), margin + 270, y);
-    drawText(item.price.toFixed(2), margin + 340, y);
-    drawText(amount.toFixed(2), margin + 430, y);
+    const values = [
+      (i + 1).toString(),
+      item.name,
+      item.qty.toString(),
+      item.price.toFixed(2),
+      amount.toFixed(2),
+    ];
+
+    const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
+    const widths = [40, 240, 60, 90, 90];
+
+    for (let j = 0; j < values.length; j++) {
+      page.drawRectangle({
+        x: positions[j],
+        y: y - rowHeight,
+        width: widths[j],
+        height: rowHeight,
+        borderWidth: 1,
+        borderColor: rgb(0.8, 0.8, 0.8),
+      });
+      drawText(values[j], positions[j] + 4, y - 8);
+    }
 
     y -= rowHeight;
   }
 
+  // Subtotal Box
   y -= 10;
   drawLine(y + rowHeight / 2);
-
-  drawText('Subtotal', margin + 340, y, { font: boldFont });
-  drawText(`₹${totalAmount.toFixed(2)}`, margin + 430, y, { font: boldFont });
+  page.drawRectangle({
+    x: margin + 340,
+    y: y - rowHeight,
+    width: 180,
+    height: rowHeight,
+    borderWidth: 1,
+    borderColor: rgb(0.8, 0.8, 0.8),
+  });
+  drawText('Subtotal', margin + 345, y - 8, { font: boldFont });
+  drawText(`₹${totalAmount.toFixed(2)}`, margin + 430, y - 8, { font: boldFont });
 
   y -= lineHeight * 3;
   drawText('Authorized Signature', pageWidth - 180, y, { font: boldFont });
@@ -236,6 +269,7 @@ y -= lineHeight * 2;
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync(filePath, pdfBytes);
 }
+
 // ✅ Email Function
 function sendInvoiceEmail(toEmail, pdfPath, orderId) {
   return new Promise((resolve, reject) => {
