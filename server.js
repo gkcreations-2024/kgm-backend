@@ -192,12 +192,10 @@ async function generatePDFInvoice(order, filePath) {
   // Left (Bill To)
   drawText('Bill To:', leftX, y, { font: boldFont });
   y -= lineHeight;
-  const addressLines = splitText(order.customer.address, 70);
-const spacedAddressLines = addressLines.flatMap(line => [line, '']);
   const leftLines = [
     `${order.customer.name}`,
     `${order.customer.phone}`,
-    ...spacedAddressLines, // Widened for better layout
+    ...splitText(order.customer.address, 70), // Widened for better layout
     `Pincode: ${order.customer.pincode}`,
     `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
   ];
