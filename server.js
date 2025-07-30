@@ -103,6 +103,7 @@ function splitText(text, maxLen) {
   lines.push(text);
   return lines;
 }
+
 function drawBoxedText(page, text, x, y, width, height, font, fontSize = 10) {
   page.drawRectangle({
     x, y: y - height,
@@ -136,7 +137,7 @@ async function generatePDFInvoice(order, filePath) {
   const pageWidth = 595;
   const pageHeight = 842;
   const margin = 40;
-  const lineHeight = 20;
+  const lineHeight = 18;
   const rowHeight = 24;
 
   let page = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -193,50 +194,49 @@ async function generatePDFInvoice(order, filePath) {
   };
 
   // Title
-  drawText('INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
+  drawText('INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 24 });
   y -= lineHeight * 2;
 
   // Billing Info without box
-const boxHeight = 80;
-const boxWidth = (pageWidth - 2 * margin - 20) / 2;
-const leftX = margin;
-const rightX = leftX + boxWidth + 20;
-const initialY = y;
+  const boxHeight = 80;
+  const boxWidth = (pageWidth - 2 * margin - 20) / 2;
+  const leftX = margin;
+  const rightX = leftX + boxWidth + 20;
+  const initialY = y;
 
-// Left (Bill To)
-drawText('Bill To:', leftX, y, { font: boldFont });
-y -= lineHeight;
-const leftLines = [
-  `${order.customer.name}`,
-  `${order.customer.phone}`,
-  ...splitText(order.customer.address, 45),
-  `Pincode: ${order.customer.pincode}`,
-  `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
-];
-leftLines.forEach(line => {
-  drawText(line, leftX, y);
+  // Left (Bill To)
+  drawText('Bill To:', leftX, y, { font: boldFont });
   y -= lineHeight;
-});
+  const leftLines = [
+    `${order.customer.name}`,
+    `${order.customer.phone}`,
+    ...splitText(order.customer.address, 45),
+    `Pincode: ${order.customer.pincode}`,
+    `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
+  ];
+  leftLines.forEach(line => {
+    drawText(line, leftX, y);
+    y -= lineHeight;
+  });
 
-// Reset Y for Right (From)
-let rightY = initialY;
-drawText('From:', rightX, rightY, { font: boldFont });
-rightY -= lineHeight;
-const rightLines = [
-  `K.G.M. TRADERS`,
-  `+91 86678 48501`,
-  ...splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', 45),
-  `Pincode: 626189`,
-  `Invoice No: INV-${order.orderId}`,
-];
-rightLines.forEach(line => {
-  drawText(line, rightX, rightY);
+  // Reset Y for Right (From)
+  let rightY = initialY;
+  drawText('From:', rightX, rightY, { font: boldFont });
   rightY -= lineHeight;
-});
+  const rightLines = [
+    `K.G.M. TRADERS`,
+    `+91 86678 48501`,
+    ...splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', 45),
+    `Pincode: 626189`,
+    `Invoice No: INV-${order.orderId}`,
+  ];
+  rightLines.forEach(line => {
+    drawText(line, rightX, rightY);
+    rightY -= lineHeight;
+  });
 
-// Move Y to the lower of both columns
-y = Math.min(y, rightY) - 10;
-
+  // Move Y to the lower of both columns
+  y = Math.min(y, rightY) - 10;
 
   drawTableHeader();
 
@@ -293,6 +293,7 @@ y = Math.min(y, rightY) - 10;
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync(filePath, pdfBytes);
 }
+
 
 // ✅ Email Function
 function sendInvoiceEmail(toEmail, pdfPath, orderId) {
