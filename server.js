@@ -242,7 +242,13 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
   const item = order.products[i];
   const amount = item.qty * item.price;
   totalAmount += amount;
-  addPageIfNeeded();
+  // Check if next row will overflow the page
+if (y - rowHeight < margin + 80) {
+  page = pdfDoc.addPage([pageWidth, pageHeight]);
+  y = pageHeight - margin;
+  drawTableHeader(); // This already reduces y
+}
+
 
   const values = [
     (i + 1).toString(),
