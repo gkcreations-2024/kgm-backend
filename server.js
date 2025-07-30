@@ -92,7 +92,17 @@ app.post("/api/checkout", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
+function splitText(text, maxLen) {
+  const lines = [];
+  while (text.length > maxLen) {
+    let splitAt = text.lastIndexOf(' ', maxLen);
+    if (splitAt === -1) splitAt = maxLen;
+    lines.push(text.substring(0, splitAt));
+    text = text.substring(splitAt).trim();
+  }
+  lines.push(text);
+  return lines;
+}
 async function generatePDFInvoice(order, filePath) {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
