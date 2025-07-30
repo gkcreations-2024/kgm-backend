@@ -299,7 +299,7 @@ if (y - rowHeight < margin + 80) {
 
  // Set dimensions and position
 const boxX = margin + 340;
-const boxY = y - 20; // Adjusted to place the box lower
+const boxY = y - 25; // Adjusted to place the box lower
 const width = 180;
 const height = 25; // Standard height for subtotal box
 
