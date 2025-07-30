@@ -96,18 +96,16 @@ app.post("/api/checkout", async (req, res) => {
 async function generatePDFInvoice(order, filePath) {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
-  const fontBytes = fs.readFileSync(path.join(__dirname, "fonts", "NotoSans-Regular.ttf"));
-const font = await pdfDoc.embedFont(fontBytes);
-const boldFont = font; // Or use a bold version if you have one
 
+  const fontBytes = fs.readFileSync(path.join(__dirname, 'fonts', 'NotoSans-Regular.ttf'));
+  const font = await pdfDoc.embedFont(fontBytes);
+  const boldFont = font;
 
   const pageWidth = 595;
   const pageHeight = 842;
   const margin = 40;
-
   const lineHeight = 20;
-  const tableHeaderHeight = 25;
-  const rowHeight = 18;
+  const rowHeight = 20;
 
   let page = pdfDoc.addPage([pageWidth, pageHeight]);
   let y = pageHeight - margin;
@@ -127,8 +125,8 @@ const boldFont = font; // Or use a bold version if you have one
     page.drawLine({
       start: { x: margin, y },
       end: { x: pageWidth - margin, y },
-      thickness: 0.5,
-      color: rgb(0.2, 0.2, 0.2),
+      thickness: 1,
+      color: rgb(0.8, 0.8, 0.8),
     });
   };
 
@@ -142,50 +140,53 @@ const boldFont = font; // Or use a bold version if you have one
   };
 
   const drawTableHeader = () => {
-    drawText("S.No", margin, y, { font: boldFont });
-    drawText("Description", margin + 40, y, { font: boldFont });
-    drawText("Qty", margin + 280, y, { font: boldFont });
-    drawText("Price (₹)", margin + 340, y, { font: boldFont });
-    drawText("Total (₹)", margin + 430, y, { font: boldFont });
-    drawLine(y - 2);
+    const bgHeight = rowHeight + 4;
+    page.drawRectangle({
+      x: margin,
+      y: y - 2,
+      width: pageWidth - 2 * margin,
+      height: bgHeight,
+      color: rgb(0.09, 0.27, 0.47), // dark blue
+    });
+
+    drawText('S.No', margin + 2, y, { font: boldFont, color: rgb(1, 1, 1) });
+    drawText('Description', margin + 40, y, { font: boldFont, color: rgb(1, 1, 1) });
+    drawText('Qty', margin + 270, y, { font: boldFont, color: rgb(1, 1, 1) });
+    drawText('Price (₹)', margin + 340, y, { font: boldFont, color: rgb(1, 1, 1) });
+    drawText('Total (₹)', margin + 430, y, { font: boldFont, color: rgb(1, 1, 1) });
+
+    y -= bgHeight;
   };
 
-  // Header
-  drawText("INVOICE", margin, y, { font: boldFont, size: 20 });
+  // Title
+  drawText('INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
   y -= lineHeight * 2;
 
-  // Customer Info
-  drawText("Bill To:", margin, y, { font: boldFont });
+  // Customer & Seller Info Side-by-Side
+  const leftX = margin;
+  const rightX = pageWidth / 2 + 10;
+  drawText('Bill To:', leftX, y, { font: boldFont });
+  drawText('From:', rightX, y, { font: boldFont });
   y -= lineHeight;
-  drawText(order.customer.name, margin, y);
+  drawText(order.customer.name, leftX, y);
+  drawText('KGM Crackers', rightX, y);
   y -= lineHeight;
-  drawText(order.customer.phone, margin, y);
+  drawText(order.customer.phone, leftX, y);
+  drawText('7904303676', rightX, y);
   y -= lineHeight;
-  drawText(order.customer.address, margin, y);
+  drawText(order.customer.address, leftX, y);
+  drawText('6/7491-A, Samy Puram Colony, Sivakasi', rightX, y);
   y -= lineHeight;
-  drawText(`Pincode: ${order.customer.pincode}`, margin, y);
-
-  y += lineHeight * 4;
-  drawText("From:", pageWidth / 2, y, { font: boldFont });
+  drawText(`Pincode: ${order.customer.pincode}`, leftX, y);
   y -= lineHeight;
-  drawText("KGM Crackers", pageWidth / 2, y);
-  y -= lineHeight;
-  drawText("7904303676", pageWidth / 2, y);
-  y -= lineHeight;
-  drawText("6/7491-A, Samy Puram Colony, Sivakasi", pageWidth / 2, y);
-
-  y -= lineHeight;
-  drawText(`Date: ${new Date(order.date).toLocaleDateString("en-IN")}`, margin, y);
-  drawText(`Invoice No: INV-${order.orderId}`, pageWidth / 2, y);
+  drawText(`Date: ${new Date(order.date).toLocaleDateString('en-IN')}`, leftX, y);
+  drawText(`Invoice No: INV-${order.orderId}`, rightX, y);
 
   y -= lineHeight * 2;
 
-  // Table
   drawTableHeader();
-  y -= rowHeight;
 
   let totalAmount = 0;
-
   for (let i = 0; i < order.products.length; i++) {
     const item = order.products[i];
     const amount = item.qty * item.price;
@@ -193,25 +194,24 @@ const boldFont = font; // Or use a bold version if you have one
 
     addPageIfNeeded();
 
-    drawText((i + 1).toString(), margin, y);
+    drawText((i + 1).toString(), margin + 2, y);
     drawText(item.name, margin + 40, y);
-    drawText(item.qty.toString(), margin + 290, y);
-    drawText(item.price.toFixed(2), margin + 350, y);
-    drawText(amount.toFixed(2), margin + 440, y);
+    drawText(item.qty.toString(), margin + 270, y);
+    drawText(item.price.toFixed(2), margin + 340, y);
+    drawText(amount.toFixed(2), margin + 430, y);
 
     y -= rowHeight;
   }
 
-  // Subtotal
-  y -= rowHeight;
+  y -= 10;
   drawLine(y + rowHeight / 2);
-  drawText("Subtotal", margin + 340, y, { font: boldFont });
-  drawText(`₹${totalAmount.toFixed(2)}`, margin + 440, y, { font: boldFont });
+
+  drawText('Subtotal', margin + 340, y, { font: boldFont });
+  drawText(`₹${totalAmount.toFixed(2)}`, margin + 430, y, { font: boldFont });
 
   y -= lineHeight * 3;
-  drawText("Authorized Signature", pageWidth - 180, y, { font: boldFont });
+  drawText('Authorized Signature', pageWidth - 180, y, { font: boldFont });
 
-  // Write PDF
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync(filePath, pdfBytes);
 }
