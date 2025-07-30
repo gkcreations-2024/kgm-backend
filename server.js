@@ -2,7 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const PDFDocument = require("pdfkit");
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const fontkit = require('@pdf-lib/fontkit');
 const fs = require("fs");
 const nodemailer = require("nodemailer");
 const path = require("path");
@@ -92,203 +93,126 @@ app.post("/api/checkout", async (req, res) => {
   }
 });
 
-// ✅ PDF Generation
-function generatePDFInvoice(order, filePath) {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 30, size: "A4", autoFirstPage: true });
-    const pageWidth = doc.page.width;
-    const pageHeight = doc.page.height;
-    const marginBottom = 30;
-    const lineHeight = 15;
-    const columnWidths = [30, 200, 60, 60, 60];
-    let y = 30;
-    const currentDate = new Date(order.date).toLocaleDateString("en-IN");
+async function generatePDFInvoice(order, filePath) {
+  const pdfDoc = await PDFDocument.create();
+  pdfDoc.registerFontkit(fontkit);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Font
-    const fontPath = path.join(__dirname, "public", "fonts", "NotoSans-Regular.ttf");
-    if (fs.existsSync(fontPath)) {
-      doc.registerFont("Noto", fontPath);
-      doc.font("Noto");
-    } else {
-      doc.font("Helvetica");
-    }
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const margin = 40;
 
-    // HEADER
-    function drawHeader(isFirstPage) {
-      y = isFirstPage ? 30 : 20;
-      doc.fontSize(16).font("Helvetica-Bold").text("KUTTY PATTAS", 30, y);
-      doc.fontSize(12).font("Helvetica").text("Invoice", pageWidth - 100, y);
+  const lineHeight = 20;
+  const tableHeaderHeight = 25;
+  const rowHeight = 18;
 
-      y += 15;
-      doc.fontSize(10)
-        .text("GSTIN No: XXXXXXXXXXXXXX", 30, y)
-        .text("3/267-D Aj polytechnic opp,", 30, y += 10)
-        .text("Chinnakamanpatti, Sivakasi - 626189", 30, y += 10)
-        .text("Phone: +91 80153 25450 / +91 94420 38077", 30, y += 10)
-        .text("Email: kuttypattascrackers@gmail.com", 30, y += 10)
-        .text(`Order Date: ${currentDate}`, pageWidth - 150, y - 20)
-        .text(`Invoice No: INV-${order.orderId}`, pageWidth - 150, y - 10);
+  let page = pdfDoc.addPage([pageWidth, pageHeight]);
+  let y = pageHeight - margin;
 
-      y += 10;
-      doc.moveTo(30, y).lineTo(pageWidth - 30, y).stroke();
-    }
-
-    // FOOTER
-    function drawFooter(pageNum, totalPages) {
-      const footerY = pageHeight - marginBottom;
-      doc.moveTo(30, footerY).lineTo(pageWidth - 30, footerY).stroke();
-      doc.fontSize(10).fillColor("#000")
-        .text("Thank you for your business!", pageWidth / 2, footerY + 5, { align: "center" })
-        .text(`Page ${pageNum} of ${totalPages}`, pageWidth - 100, footerY + 5);
-    }
-
-    // TABLE HEADER
-    function drawTableHeader(startY) {
-      doc.fontSize(10).font("Helvetica-Bold")
-        .text("S.No", 30, startY)
-        .text("Description", 60, startY)
-        .text("Qty", 270, startY, { width: 40, align: "center" })
-        .text("Price", 330, startY, { width: 60, align: "center" })
-        .text("Total", 410, startY, { width: 60, align: "center" });
-
-      doc.moveTo(30, startY + 12).lineTo(pageWidth - 30, startY + 12).stroke();
-      return startY + 20;
-    }
-
-    drawHeader(true);
-
-    // BILL TO
-    y += 15;
-    doc.font("Helvetica-Bold").text("Billed To:", 30, y);
-    doc.font("Helvetica").fontSize(10)
-      .text(`Name: ${order.customer.name}`, 30, y += 10)
-      .text(`Address: ${order.customer.address}`, 30, y += 10)
-      .text(`Pincode: ${order.customer.pincode}`, 30, y += 10)
-      .text(`Phone: ${order.customer.phone}`, 30, y += 10)
-      .text(`Email: ${order.customer.email || "-"}`, 30, y += 10);
-
-    // TABLE CONTENT
-    y += 20;
-    y = drawTableHeader(y);
-
-    let totalAmount = 0;
-    let sno = 1;
-
-    for (const item of order.products) {
-      const amount = item.price * item.qty;
-      totalAmount += amount;
-
-      const textHeight = 15;
-      if (y + textHeight > pageHeight - marginBottom - 50) {
-        drawFooter(doc.page.index + 1, null);
-        doc.addPage();
-        drawHeader(false);
-        y = drawTableHeader(30);
-      }
-
-      doc.font("Helvetica").fontSize(10)
-        .text(sno, 30, y)
-        .text(item.name, 60, y)
-        .text(item.qty.toString(), 270, y, { width: 40, align: "center" })
-        .text(`₹${item.price.toFixed(2)}`, 330, y, { width: 60, align: "center" })
-        .text(`₹${amount.toFixed(2)}`, 410, y, { width: 60, align: "center" });
-
-      y += textHeight;
-      sno++;
-    }
-
-    // TOTAL
-    y += 10;
-    doc.font("Helvetica-Bold").fontSize(12)
-      .text(`Total Amount: ₹${totalAmount.toFixed(2)}`, pageWidth / 2 - 60, y);
-
-    drawFooter(doc.page.index + 1, null);
-
-    // BANK DETAILS PAGE
-    doc.addPage();
-    drawHeader(true);
-
-    doc.font("Helvetica-Bold").fontSize(14).text("Banking and Payment Details", pageWidth / 2, 60, { align: "center" });
-
-    const banks = [
-      { name: "SBI", accountNo: "35950968662", ifsc: "SBIN0000961", branch: "Sivakasi" }
-    ];
-
-    y = 90;
-    doc.fontSize(10).font("Helvetica-Bold")
-      .text("Bank", 30, y)
-      .text("Account No", 120, y)
-      .text("Branch", 240, y)
-      .text("IFSC", 350, y);
-    y += 10;
-
-    banks.forEach(bank => {
-      doc.font("Helvetica").text(bank.name, 30, y)
-        .text(bank.accountNo, 120, y)
-        .text(bank.branch, 240, y)
-        .text(bank.ifsc, 350, y);
-      y += 15;
+  const drawText = (text, x, y, options = {}) => {
+    page.drawText(text, {
+      x,
+      y,
+      size: options.size || 10,
+      font: options.font || font,
+      color: options.color || rgb(0, 0, 0),
+      ...options,
     });
+  };
 
-    y += 30;
-    doc.font("Helvetica-Bold").fontSize(14).text("Any Queries?", pageWidth / 2, y, { align: "center" });
-    y += 20;
+  const drawLine = (y) => {
+    page.drawLine({
+      start: { x: margin, y },
+      end: { x: pageWidth - margin, y },
+      thickness: 0.5,
+      color: rgb(0.2, 0.2, 0.2),
+    });
+  };
 
-    doc.fontSize(12).font("Helvetica")
-      .text("If you have any questions about this invoice, please contact us at:", 30, y)
-      .text("Phone(GPay): +91 8015325450", 30, y + 15)
-      .text("Phone: +91 9442038077", 30, y + 30)
-      .text("Email: kuttypattascrackers@gmail.com", 30, y + 45);
-
-    // QUOTE
-    y += 75;
-    doc.fontSize(14).font("Helvetica-Bold").text("Quote of the Day", pageWidth / 2, y, { align: "center" });
-
-    const quote = "“You deserve the best, and we're here to deliver it every time!”";
-    const author = "- Kutty Pattas Team";
-
-    doc.fontSize(12).font("Times-Italic")
-      .text(quote, pageWidth / 2, y + 20, { align: "center" })
-      .text(author, pageWidth / 2, y + 35, { align: "center" });
-
-    // FOOTERS FOR ALL PAGES
-    const totalPages = doc.bufferedPageRange().count;
-    for (let i = 0; i < totalPages; i++) {
-      doc.switchToPage(i);
-      drawFooter(i + 1, totalPages);
+  const addPageIfNeeded = () => {
+    if (y < margin + 80) {
+      page = pdfDoc.addPage([pageWidth, pageHeight]);
+      y = pageHeight - margin;
+      drawTableHeader();
+      y -= rowHeight;
     }
+  };
 
-    // Finish
-    doc.pipe(fs.createWriteStream(filePath));
-    doc.end();
-    resolve();
-  });
+  const drawTableHeader = () => {
+    drawText("S.No", margin, y, { font: boldFont });
+    drawText("Description", margin + 40, y, { font: boldFont });
+    drawText("Qty", margin + 280, y, { font: boldFont });
+    drawText("Price (₹)", margin + 340, y, { font: boldFont });
+    drawText("Total (₹)", margin + 430, y, { font: boldFont });
+    drawLine(y - 2);
+  };
+
+  // Header
+  drawText("INVOICE", margin, y, { font: boldFont, size: 20 });
+  y -= lineHeight * 2;
+
+  // Customer Info
+  drawText("Bill To:", margin, y, { font: boldFont });
+  y -= lineHeight;
+  drawText(order.customer.name, margin, y);
+  y -= lineHeight;
+  drawText(order.customer.phone, margin, y);
+  y -= lineHeight;
+  drawText(order.customer.address, margin, y);
+  y -= lineHeight;
+  drawText(`Pincode: ${order.customer.pincode}`, margin, y);
+
+  y += lineHeight * 4;
+  drawText("From:", pageWidth / 2, y, { font: boldFont });
+  y -= lineHeight;
+  drawText("KGM Crackers", pageWidth / 2, y);
+  y -= lineHeight;
+  drawText("7904303676", pageWidth / 2, y);
+  y -= lineHeight;
+  drawText("6/7491-A, Samy Puram Colony, Sivakasi", pageWidth / 2, y);
+
+  y -= lineHeight;
+  drawText(`Date: ${new Date(order.date).toLocaleDateString("en-IN")}`, margin, y);
+  drawText(`Invoice No: INV-${order.orderId}`, pageWidth / 2, y);
+
+  y -= lineHeight * 2;
+
+  // Table
+  drawTableHeader();
+  y -= rowHeight;
+
+  let totalAmount = 0;
+
+  for (let i = 0; i < order.products.length; i++) {
+    const item = order.products[i];
+    const amount = item.qty * item.price;
+    totalAmount += amount;
+
+    addPageIfNeeded();
+
+    drawText((i + 1).toString(), margin, y);
+    drawText(item.name, margin + 40, y);
+    drawText(item.qty.toString(), margin + 290, y);
+    drawText(item.price.toFixed(2), margin + 350, y);
+    drawText(amount.toFixed(2), margin + 440, y);
+
+    y -= rowHeight;
+  }
+
+  // Subtotal
+  y -= rowHeight;
+  drawLine(y + rowHeight / 2);
+  drawText("Subtotal", margin + 340, y, { font: boldFont });
+  drawText(`₹${totalAmount.toFixed(2)}`, margin + 440, y, { font: boldFont });
+
+  y -= lineHeight * 3;
+  drawText("Authorized Signature", pageWidth - 180, y, { font: boldFont });
+
+  // Write PDF
+  const pdfBytes = await pdfDoc.save();
+  fs.writeFileSync(filePath, pdfBytes);
 }
-
-
-function addTableHeader(doc, y) {
-  doc.rect(30, y, doc.page.width - 60, 20).fill("#0b3f91");
-  doc.fillColor("#fff")
-    .fontSize(10)
-    .font("Helvetica-Bold")
-    .text("S.No", 35, y + 5)
-    .text("Description", 65, y + 5)
-    .text("Qty", 320, y + 5, { width: 40, align: "center" })
-    .text("Price", 370, y + 5, { width: 60, align: "center" })
-    .text("Total", 440, y + 5, { width: 60, align: "center" });
-}
-
-function addFooter(doc, pageNum, totalPages) {
-  const footerY = doc.page.height - 30;
-  doc.rect(0, footerY, doc.page.width, 30).fill("#0b3f91");
-  doc.fillColor("#fff")
-    .fontSize(10)
-    .font("Helvetica-Bold")
-    .text("KGM", 30, footerY + 10)
-    .text("Thank You!", 0, footerY + 10, { align: "center" })
-    .text(`Page ${pageNum} of ${totalPages}`, 0, footerY + 10, { align: "right" });
-}
-
 // ✅ Email Function
 function sendInvoiceEmail(toEmail, pdfPath, orderId) {
   return new Promise((resolve, reject) => {
