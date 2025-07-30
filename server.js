@@ -150,34 +150,41 @@ async function generatePDFInvoice(order, filePath) {
     }
   };
 
-  const drawTableHeader = () => {
-    const headers = ['S.No', 'Description', 'Qty', 'Price (₹)', 'Total (₹)'];
-    const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
-    const widths = [40, 240, 60, 90, 90];
-    const headerHeight = rowHeight;
+ const drawTableHeader = () => {
+  const headers = ['S.No', 'Description', 'Qty', 'Price (₹)', 'Total (₹)'];
+  const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
+  const widths = [40, 240, 60, 90, 90];
+  const headerHeight = rowHeight;
+  const fontSize = 10;
 
-    for (let i = 0; i < headers.length; i++) {
-      page.drawRectangle({
-        x: positions[i],
-        y: y - headerHeight,
-        width: widths[i],
-        height: headerHeight,
-        color: rgb(0.09, 0.27, 0.47),
-        borderWidth: 1,
-        borderColor: rgb(0.2, 0.2, 0.2),
-      });
+  for (let i = 0; i < headers.length; i++) {
+    // Draw cell background
+    page.drawRectangle({
+      x: positions[i],
+      y: y - headerHeight,
+      width: widths[i],
+      height: headerHeight,
+      color: rgb(0.09, 0.27, 0.47),
+      borderWidth: 1,
+      borderColor: rgb(0.2, 0.2, 0.2),
+    });
 
-      const text = headers[i];
-      const fontSize = 10;
-      const textWidth = boldFont.widthOfTextAtSize(text, fontSize);
-      const cellCenterX = positions[i] + widths[i] / 2;
-      const textX = cellCenterX - textWidth / 2;
+    // Center-align text horizontally
+    const text = headers[i];
+    const textWidth = boldFont.widthOfTextAtSize(text, fontSize);
+    const cellCenterX = positions[i] + widths[i] / 2;
+    const textX = cellCenterX - textWidth / 2;
 
-      drawText(text, textX, y - 8, { font: boldFont, color: rgb(1, 1, 1) });
-    }
+    // Center-align text vertically
+    const textHeight = boldFont.heightAtSize(fontSize);
+    const textY = y - (headerHeight / 2) - (textHeight / 4);  // Vertically centered
 
-    y -= headerHeight;
-  };
+    drawText(text, textX, textY, { font: boldFont, size: fontSize, color: rgb(1, 1, 1) });
+  }
+
+  y -= headerHeight;
+};
+
 
   // Title
   drawText('INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
