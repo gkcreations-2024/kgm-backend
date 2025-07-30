@@ -177,6 +177,7 @@ async function generatePDFInvoice(order, filePath) {
   drawText(order.customer.address, leftX, y);
   drawText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', rightX, y);
   y -= lineHeight;
+  y -= lineHeight;
   drawText(`Pincode: ${order.customer.pincode}`, leftX, y);
   drawText('Pincode: 626189', rightX, y);
   y -= lineHeight;
