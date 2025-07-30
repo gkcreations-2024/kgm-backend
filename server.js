@@ -184,7 +184,7 @@ async function generatePDFInvoice(order, filePath) {
   }
   // ✅ Vertically center
   const textY = y - (rowHeight / 2) - (textHeight / 4);
-  drawText(text, textX, textY, { font, size: fontSize });
+  drawText(text, textX, textY, { font, size: fontSize, color: rgb(1, 1, 1) });
 }
   y -= headerHeight;
 };
