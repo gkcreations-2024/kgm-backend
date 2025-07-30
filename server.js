@@ -191,7 +191,7 @@ async function generatePDFInvoice(order, filePath) {
 
 
   // Title
-  drawText('INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
+  drawText('KGM INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
   y -= lineHeight * 2;
 
   // Billing Info
