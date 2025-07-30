@@ -255,32 +255,31 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
     const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
     const widths = [40, 240, 60, 90, 90];
 
-    for (let j = 0; j < values.length; j++) {
-      page.drawRectangle({
-        x: positions[j],
-        y: y - rowHeight,
-        width: widths[j],
-        height: rowHeight,
-        borderWidth: 1,
-        borderColor: rgb(0.8, 0.8, 0.8),
-      });
+  for (let j = 0; j < values.length; j++) {
+  page.drawRectangle({
+    x: positions[j],
+    y: y - rowHeight,
+    width: widths[j],
+    height: rowHeight,
+    borderWidth: 1,
+    borderColor: rgb(0.8, 0.8, 0.8),
+  });
 
-      const text = values[j];
-      const fontSize = 10;
-      const textWidth = font.widthOfTextAtSize(text, fontSize);
-      let textX;
+  const text = values[j];
+  const fontSize = 10;
+  const textWidth = font.widthOfTextAtSize(text, fontSize);
+  const textHeight = font.heightAtSize(fontSize);
 
-      if (j === 1) {
-        // Description: left-align
-        textX = positions[j] + 4;
-      } else {
-        // Center-align
-        const centerX = positions[j] + widths[j] / 2;
-        textX = centerX - textWidth / 2;
-      }
+  // Horizontal centering
+  const centerX = positions[j] + widths[j] / 2;
+  const textX = centerX - textWidth / 2;
 
-      drawText(text, textX, y - 8, { font, size: fontSize });
-    }
+  // Vertical centering
+  const textY = y - (rowHeight / 2) - (textHeight / 4);
+
+  drawText(text, textX, textY, { font, size: fontSize });
+}
+
 
     y -= rowHeight;
   }
