@@ -92,6 +92,17 @@ app.post("/api/checkout", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+function splitText(text, maxLen) {
+  const lines = [];
+  while (text.length > maxLen) {
+    let splitAt = text.lastIndexOf(' ', maxLen);
+    if (splitAt === -1) splitAt = maxLen;
+    lines.push(text.substring(0, splitAt));
+    text = text.substring(splitAt).trim();
+  }
+  lines.push(text);
+  return lines;
+}
 
 async function generatePDFInvoice(order, filePath) {
   const pdfDoc = await PDFDocument.create();
@@ -185,13 +196,14 @@ for (let i = 0; i < Math.max(leftAddressLines.length, rightAddressLines.length);
   y -= lineHeight;
 }
 
-  drawText(`Pincode: ${order.customer.pincode}`, leftX, y);
-  drawText('Pincode: 626189', rightX, y);
-  y -= lineHeight;
-  drawText(`Date: ${new Date(order.date).toLocaleDateString('en-IN')}`, leftX, y);
-  drawText(`Invoice No: INV-${order.orderId}`, rightX, y);
+ drawText(`Pincode: ${order.customer.pincode}`, leftX, y);
+drawText('Pincode: 626189', rightX, y);
+y -= lineHeight;
 
-  y -= lineHeight * 2;
+drawText(`Date: ${new Date(order.date).toLocaleDateString('en-IN')}`, leftX, y);
+drawText(`Invoice No: INV-${order.orderId}`, rightX, y);
+y -= lineHeight * 2;
+
 
   drawTableHeader();
 
