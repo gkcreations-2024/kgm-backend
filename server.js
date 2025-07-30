@@ -239,50 +239,58 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
 
   let totalAmount = 0;
   for (let i = 0; i < order.products.length; i++) {
-    const item = order.products[i];
-    const amount = item.qty * item.price;
-    totalAmount += amount;
-    addPageIfNeeded();
+  const item = order.products[i];
+  const amount = item.qty * item.price;
+  totalAmount += amount;
+  addPageIfNeeded();
 
-    const values = [
-      (i + 1).toString(),
-      item.name,
-      item.qty.toString(),
-      item.price.toFixed(2),
-      amount.toFixed(2),
-    ];
+  const values = [
+    (i + 1).toString(),
+    item.name,
+    item.qty.toString(),
+    item.price.toFixed(2),
+    amount.toFixed(2),
+  ];
 
-    const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
-    const widths = [40, 240, 60, 90, 90];
+  const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
+  const widths = [40, 240, 60, 90, 90];
 
   for (let j = 0; j < values.length; j++) {
-  page.drawRectangle({
-    x: positions[j],
-    y: y - rowHeight,
-    width: widths[j],
-    height: rowHeight,
-    borderWidth: 1,
-    borderColor: rgb(0.8, 0.8, 0.8),
-  });
+    // Draw cell rectangle
+    page.drawRectangle({
+      x: positions[j],
+      y: y - rowHeight,
+      width: widths[j],
+      height: rowHeight,
+      borderWidth: 1,
+      borderColor: rgb(0.8, 0.8, 0.8),
+    });
 
-  const text = values[j];
-  const fontSize = 10;
-  const textWidth = font.widthOfTextAtSize(text, fontSize);
-  const textHeight = font.heightAtSize(fontSize);
+    const text = values[j];
+    const fontSize = 10;
+    const textWidth = font.widthOfTextAtSize(text, fontSize);
+    const textHeight = font.heightAtSize(fontSize);
 
-  // Horizontal centering
-  const centerX = positions[j] + widths[j] / 2;
-  const textX = centerX - textWidth / 2;
+    // Horizontal alignment
+    let textX;
+    if (j === 1) {
+      // Description: center-align instead of left-align
+      const centerX = positions[j] + widths[j] / 2;
+      textX = centerX - textWidth / 2;
+    } else {
+      const centerX = positions[j] + widths[j] / 2;
+      textX = centerX - textWidth / 2;
+    }
 
-  // Vertical centering
-  const textY = y - (rowHeight / 2) - (textHeight / 4);
+    // ✅ Vertical centering
+    const textY = y - (rowHeight / 2) - (textHeight / 4);
 
-  drawText(text, textX, textY, { font, size: fontSize });
+    drawText(text, textX, textY, { font, size: fontSize });
+  }
+
+  y -= rowHeight;
 }
 
-
-    y -= rowHeight;
-  }
 
   // Subtotal Box
   y -= 10;
