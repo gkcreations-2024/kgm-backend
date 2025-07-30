@@ -298,18 +298,38 @@ if (y - rowHeight < margin + 80) {
 
 
   // Subtotal Box
-  y -= 10;
-  drawLine(y + rowHeight / 2);
-  page.drawRectangle({
-    x: margin + 340,
-    y: y - rowHeight,
-    width: 180,
-    height: rowHeight,
-    borderWidth: 1,
-    borderColor: rgb(0, 0, 0),
-  });
-  drawText('Subtotal', margin + 345, y - 8, { font: boldFont });
-  drawText(`₹${totalAmount.toFixed(2)}`, margin + 430, y - 8, { font: boldFont });
+ // Adjust y only once
+y -= 10;
+
+// Draw line above the subtotal box (optional if needed)
+drawLine(y);
+
+// Draw the Subtotal Box
+const boxX = margin + 340;
+const boxY = y - rowHeight;
+const boxWidth = 180;
+const boxHeight = rowHeight;
+
+page.drawRectangle({
+  x: boxX,
+  y: boxY,
+  width: boxWidth,
+  height: boxHeight,
+  borderWidth: 1,
+  borderColor: rgb(0, 0, 0),
+});
+
+// Vertically center the text
+const textYOffset = 8; // Adjust this if needed based on font size
+
+drawText('Subtotal', boxX + 5, boxY + textYOffset, {
+  font: boldFont,
+  color: rgb(0, 0, 0),
+});
+drawText(`₹${totalAmount.toFixed(2)}`, boxX + 90, boxY + textYOffset, {
+  font: boldFont,
+  color: rgb(0, 0, 0),
+});
 
   // Signature
   y -= lineHeight * 3;
