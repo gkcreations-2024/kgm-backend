@@ -103,27 +103,6 @@ function splitText(text, maxLen) {
   lines.push(text);
   return lines;
 }
-function drawBoxedText(page, text, x, y, width, height, font, fontSize = 10) {
-  page.drawRectangle({
-    x, y: y - height,
-    width, height,
-    borderColor: rgb(0.7, 0.7, 0.7),
-    borderWidth: 1,
-  });
-
-  const lines = splitText(text, 40);
-  let offsetY = y - fontSize - 4;
-  for (const line of lines) {
-    page.drawText(line, {
-      x: x + 5,
-      y: offsetY,
-      size: fontSize,
-      font,
-      color: rgb(0, 0, 0),
-    });
-    offsetY -= fontSize + 2;
-  }
-}
 
 async function generatePDFInvoice(order, filePath) {
   const pdfDoc = await PDFDocument.create();
@@ -172,80 +151,76 @@ async function generatePDFInvoice(order, filePath) {
   };
 
   const drawTableHeader = () => {
-  const headers = ['S.No', 'Description', 'Qty', 'Price (₹)', 'Total (₹)'];
-  const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
-  const widths = [40, 240, 60, 90, 90];
-  const headerHeight = rowHeight;
+    const headers = ['S.No', 'Description', 'Qty', 'Price (₹)', 'Total (₹)'];
+    const positions = [margin, margin + 40, margin + 280, margin + 340, margin + 430];
+    const widths = [40, 240, 60, 90, 90];
+    const headerHeight = rowHeight;
 
-  for (let i = 0; i < headers.length; i++) {
-    // Draw background cell
-    page.drawRectangle({
-      x: positions[i],
-      y: y - headerHeight,
-      width: widths[i],
-      height: headerHeight,
-      color: rgb(0.09, 0.27, 0.47),
-      borderWidth: 1,
-      borderColor: rgb(0.2, 0.2, 0.2),
-    });
+    for (let i = 0; i < headers.length; i++) {
+      page.drawRectangle({
+        x: positions[i],
+        y: y - headerHeight,
+        width: widths[i],
+        height: headerHeight,
+        color: rgb(0.09, 0.27, 0.47),
+        borderWidth: 1,
+        borderColor: rgb(0.2, 0.2, 0.2),
+      });
 
-    // Center-align text
-    const text = headers[i];
-    const textWidth = boldFont.widthOfTextAtSize(text, 10); // size = 10
-    const cellCenterX = positions[i] + widths[i] / 2;
-    const textX = cellCenterX - textWidth / 2;
+      const text = headers[i];
+      const fontSize = 10;
+      const textWidth = boldFont.widthOfTextAtSize(text, fontSize);
+      const cellCenterX = positions[i] + widths[i] / 2;
+      const textX = cellCenterX - textWidth / 2;
 
-    drawText(text, textX, y - 8, { font: boldFont, color: rgb(1, 1, 1) });
-  }
+      drawText(text, textX, y - 8, { font: boldFont, color: rgb(1, 1, 1) });
+    }
 
-  y -= headerHeight;
-};
+    y -= headerHeight;
+  };
 
   // Title
   drawText('INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
   y -= lineHeight * 2;
 
-  // Billing Info without box
-const boxHeight = 80;
-const boxWidth = (pageWidth - 2 * margin - 20) / 2;
-const leftX = margin;
-const rightX = leftX + boxWidth + 20;
-const initialY = y;
+  // Billing Info
+  const boxWidth = (pageWidth - 2 * margin - 10) / 2; // Slightly more width
+  const leftX = margin;
+  const rightX = leftX + boxWidth + 10;
+  const initialY = y;
 
-// Left (Bill To)
-drawText('Bill To:', leftX, y, { font: boldFont });
-y -= lineHeight;
-const leftLines = [
-  `${order.customer.name}`,
-  `${order.customer.phone}`,
-  ...splitText(order.customer.address, 45),
-  `Pincode: ${order.customer.pincode}`,
-  `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
-];
-leftLines.forEach(line => {
-  drawText(line, leftX, y);
+  // Left (Bill To)
+  drawText('Bill To:', leftX, y, { font: boldFont });
   y -= lineHeight;
-});
+  const leftLines = [
+    `${order.customer.name}`,
+    `${order.customer.phone}`,
+    ...splitText(order.customer.address, 70), // Widened for better layout
+    `Pincode: ${order.customer.pincode}`,
+    `Date: ${new Date(order.date).toLocaleDateString('en-IN')}`,
+  ];
+  leftLines.forEach(line => {
+    drawText(line, leftX, y);
+    y -= lineHeight;
+  });
 
-// Reset Y for Right (From)
-let rightY = initialY;
-drawText('From:', rightX, rightY, { font: boldFont });
-rightY -= lineHeight;
-const rightLines = [
-  `K.G.M. TRADERS`,
-  `+91 86678 48501`,
-  ...splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', 45),
-  `Pincode: 626189`,
-  `Invoice No: INV-${order.orderId}`,
-];
-rightLines.forEach(line => {
-  drawText(line, rightX, rightY);
+  // Right (From)
+  let rightY = initialY;
+  drawText('From:', rightX, rightY, { font: boldFont });
   rightY -= lineHeight;
-});
+  const rightLines = [
+    `K.G.M. TRADERS`,
+    `+91 86678 48501`,
+    ...splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', 70),
+    `Pincode: 626189`,
+    `Invoice No: INV-${order.orderId}`,
+  ];
+  rightLines.forEach(line => {
+    drawText(line, rightX, rightY);
+    rightY -= lineHeight;
+  });
 
-// Move Y to the lower of both columns
-y = Math.min(y, rightY) - 10;
-
+  y = Math.min(y, rightY) - 10;
 
   drawTableHeader();
 
@@ -276,7 +251,22 @@ y = Math.min(y, rightY) - 10;
         borderWidth: 1,
         borderColor: rgb(0.8, 0.8, 0.8),
       });
-      drawText(values[j], positions[j] + 4, y - 8);
+
+      const text = values[j];
+      const fontSize = 10;
+      const textWidth = font.widthOfTextAtSize(text, fontSize);
+      let textX;
+
+      if (j === 1) {
+        // Description: left-align
+        textX = positions[j] + 4;
+      } else {
+        // Center-align
+        const centerX = positions[j] + widths[j] / 2;
+        textX = centerX - textWidth / 2;
+      }
+
+      drawText(text, textX, y - 8, { font, size: fontSize });
     }
 
     y -= rowHeight;
@@ -296,9 +286,11 @@ y = Math.min(y, rightY) - 10;
   drawText('Subtotal', margin + 345, y - 8, { font: boldFont });
   drawText(`₹${totalAmount.toFixed(2)}`, margin + 430, y - 8, { font: boldFont });
 
+  // Signature
   y -= lineHeight * 3;
   drawText('Authorized Signature', pageWidth - 180, y, { font: boldFont });
 
+  // Save PDF
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync(filePath, pdfBytes);
 }
