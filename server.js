@@ -190,9 +190,29 @@ async function generatePDFInvoice(order, filePath) {
 };
 
 
-  // Title
-  drawText('KGM INVOICE', pageWidth / 2 - 30, y, { font: boldFont, size: 18 });
-  y -= lineHeight * 2;
+  // Load logo image
+const logoImageBytes = await fetch('https://ibb.co/4Rk2P9Lk').then(res => res.arrayBuffer());
+const logoImage = await pdfDoc.embedPng(logoImageBytes);
+const logoDims = logoImage.scale(0.15);
+
+// Position
+const logoX = pageWidth / 2 - 100;
+const logoY = y - logoDims.height + 5;
+
+// Draw logo
+page.drawImage(logoImage, {
+  x: logoX,
+  y: logoY,
+  width: logoDims.width,
+  height: logoDims.height,
+});
+
+// Draw title
+drawText('KGM INVOICE', logoX + logoDims.width + 10, y, {
+  font: boldFont,
+  size: 18,
+});
+
 
   // Billing Info
   const boxWidth = (pageWidth - 2 * margin - 10) / 2; // Slightly more width
