@@ -253,24 +253,31 @@ const spacedAddressLines = addressLines.flatMap(line => [line, '']);
     const widths = [40, 240, 60, 90, 90];
 
     for (let j = 0; j < values.length; j++) {
-  page.drawRectangle({
-    x: positions[j],
-    y: y - rowHeight,
-    width: widths[j],
-    height: rowHeight,
-    borderWidth: 1,
-    borderColor: rgb(0.8, 0.8, 0.8),
-  });
+      page.drawRectangle({
+        x: positions[j],
+        y: y - rowHeight,
+        width: widths[j],
+        height: rowHeight,
+        borderWidth: 1,
+        borderColor: rgb(0.8, 0.8, 0.8),
+      });
 
-  const text = values[j];
-  const fontSize = 10;
-  const textWidth = font.widthOfTextAtSize(text, fontSize);
-  const centerX = positions[j] + widths[j] / 2;
-  const textX = centerX - textWidth / 2;
+      const text = values[j];
+      const fontSize = 10;
+      const textWidth = font.widthOfTextAtSize(text, fontSize);
+      let textX;
 
-  drawText(text, textX, y - 8, { font, size: fontSize });
-}
+      if (j === 1) {
+        // Description: left-align
+        textX = positions[j] + 4;
+      } else {
+        // Center-align
+        const centerX = positions[j] + widths[j] / 2;
+        textX = centerX - textWidth / 2;
+      }
 
+      drawText(text, textX, y - 8, { font, size: fontSize });
+    }
 
     y -= rowHeight;
   }
