@@ -320,7 +320,7 @@ page.drawRectangle({
 
 
 // Vertically center the text
-const textYOffset = 8; // Adjust this if needed based on font size
+const textYOffset = 20; // Adjust this if needed based on font size
 
 drawText('Subtotal', boxX + 5, boxY + textYOffset, {
   font: boldFont,
