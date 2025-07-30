@@ -304,20 +304,20 @@ y -= 10;
 // Draw line above the subtotal box (optional if needed)
 drawLine(y);
 
-// Draw the Subtotal Box
 const boxX = margin + 340;
 const boxY = y - rowHeight;
-const boxWidth = 180;
-const boxHeight = rowHeight;
+const width = 180;
+const height = rowHeight;
 
 page.drawRectangle({
   x: boxX,
   y: boxY,
-  width: boxWidth,
-  height: boxHeight,
+  width: width,
+  height: height,
   borderWidth: 1,
   borderColor: rgb(0, 0, 0),
 });
+
 
 // Vertically center the text
 const textYOffset = 8; // Adjust this if needed based on font size
