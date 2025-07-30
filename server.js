@@ -176,7 +176,7 @@ async function generatePDFInvoice(order, filePath) {
   y -= lineHeight;
   // Break long address into 2 lines if needed
 const leftAddressLines = splitText(order.customer.address, 35); // max ~35 characters
-const rightAddressLines = splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI', 35);
+const rightAddressLines = splitText('3/1320-14,R.R.NAGAR,PARAIPATTI,SIVAKASI-626189', 35);
 
 // Draw addresses (multi-line safe)
 for (let i = 0; i < Math.max(leftAddressLines.length, rightAddressLines.length); i++) {
@@ -184,11 +184,9 @@ for (let i = 0; i < Math.max(leftAddressLines.length, rightAddressLines.length);
   if (rightAddressLines[i]) drawText(rightAddressLines[i], rightX, y);
   y -= lineHeight;
 }
-
   drawText(`Pincode: ${order.customer.pincode}`, leftX, y);
-  drawText('Pincode: 626189', rightX, y);
   y -= lineHeight;
-  drawText(`Date: ${new Date(order.date).toLocaleDateString('en-IN')}`, leftX, y);
+  drawText(`Date: ${new Date(order.date).toLocaleDateString('en-IN')}`, rightX, y);
   drawText(`Invoice No: INV-${order.orderId}`, rightX, y);
 
   y -= lineHeight * 2;
