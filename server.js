@@ -191,7 +191,8 @@ async function generatePDFInvoice(order, filePath) {
 
 
   // Load logo image
-const logoImageBytes = await fetch('https://ibb.co/4Rk2P9Lk').then(res => res.arrayBuffer());
+const fetch = require('node-fetch');
+const logoImageBytes = await fetch('https://i.postimg.cc/7hnmxS3j/logcrt.png').then(res => res.arrayBuffer());
 const logoImage = await pdfDoc.embedPng(logoImageBytes);
 const logoDims = logoImage.scale(0.15);
 
