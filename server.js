@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const { Resend } = require("resend");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
@@ -341,8 +342,8 @@ drawText(`₹${totalAmount.toFixed(2)}`, boxX + 100, textYCentered, {
 }
 
 // ✅ Email Function
-function sendInvoiceEmail(toEmail, pdfPath, orderId) {
-  return new Promise((resolve, reject) => {
+// function sendInvoiceEmail(toEmail, pdfPath, orderId) {
+  // return new Promise((resolve, reject) => {
     // const transporter = nodemailer.createTransport({
     //   service: "gmail",
     //   auth: {
@@ -350,37 +351,55 @@ function sendInvoiceEmail(toEmail, pdfPath, orderId) {
     //     pass: process.env.EMAIL_PASS,
     //   },
     // });
-    const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,               // or 587 if STARTTLS
-  secure: true,            // true for 465, false for 587
-  auth: {
-    user: process.env.EMAIL_USER,  // your full Gmail address
-    pass: process.env.EMAIL_PASS,  // must be an App Password
-  },
-});
+  
 
-    const mailOptions = {
-      from: `KGM Crackers <${process.env.EMAIL_USER}>`,
+//     const mailOptions = {
+//       from: `KGM Crackers <${process.env.EMAIL_USER}>`,
+//       to: toEmail,
+//       bcc: "kgmcrackers2025@gmail.com",
+//       subject: `🧨 Your Invoice - KGM Crackers Order #${orderId}`,
+//       text: `Dear Customer,\n\nThank you for your order!\nPlease find the attached invoice for your order #${orderId}.\n\nRegards,\nKGM Crackers Team`,
+//       attachments: [{ filename: `invoice_${orderId}.pdf`, path: pdfPath }],
+//     };
+
+//     transporter.sendMail(mailOptions, (err, info) => {
+//       if (err) {
+//         console.error("❌ Email error:", err);
+//         reject(err);
+//       } else {
+//         console.log("✅ Email sent:", info.response);
+//         resolve();
+//       }
+//     });
+//   });
+// }
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+async function sendInvoiceEmail(toEmail, pdfPath, orderId) {
+  try {
+    const pdfFile = fs.readFileSync(pdfPath); // read pdf
+
+    await resend.emails.send({
+      from: "KGM Crackers <onboarding@resend.dev>", 
       to: toEmail,
       bcc: "kgmcrackers2025@gmail.com",
       subject: `🧨 Your Invoice - KGM Crackers Order #${orderId}`,
       text: `Dear Customer,\n\nThank you for your order!\nPlease find the attached invoice for your order #${orderId}.\n\nRegards,\nKGM Crackers Team`,
-      attachments: [{ filename: `invoice_${orderId}.pdf`, path: pdfPath }],
-    };
-
-    transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        console.error("❌ Email error:", err);
-        reject(err);
-      } else {
-        console.log("✅ Email sent:", info.response);
-        resolve();
-      }
+      attachments: [
+        {
+          filename: `invoice_${orderId}.pdf`,
+          content: pdfFile.toString("base64"), // base64 encode
+        },
+      ],
     });
-  });
-}
 
+    console.log("✅ Email sent via Resend");
+    return Promise.resolve();
+  } catch (err) {
+    console.error("❌ Resend email error:", err);
+    return Promise.reject(err);
+  }
+}
 // ✅ Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
