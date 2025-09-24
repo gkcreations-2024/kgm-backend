@@ -373,7 +373,7 @@ drawText(`₹${totalAmount.toFixed(2)}`, boxX + 100, textYCentered, {
 //     });
 //   });
 // }
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.InvoiceMailer);
 
 async function sendInvoiceEmail(toEmail, pdfPath, orderId) {
   try {
