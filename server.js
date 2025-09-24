@@ -380,7 +380,7 @@ async function sendInvoiceEmail(toEmail, pdfPath, orderId) {
     const pdfFile = fs.readFileSync(pdfPath); // read pdf
 
     await resend.emails.send({
-      from: "KGM Crackers <onboarding@resend.dev>", 
+      from: "KGM Crackers <support@kgmcrackers.in>", 
       to: toEmail,
       bcc: "kgmcrackers2025@gmail.com",
       subject: `🧨 Your Invoice - KGM Crackers Order #${orderId}`,
