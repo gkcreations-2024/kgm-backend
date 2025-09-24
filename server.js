@@ -343,13 +343,22 @@ drawText(`₹${totalAmount.toFixed(2)}`, boxX + 100, textYCentered, {
 // ✅ Email Function
 function sendInvoiceEmail(toEmail, pdfPath, orderId) {
   return new Promise((resolve, reject) => {
+    // const transporter = nodemailer.createTransport({
+    //   service: "gmail",
+    //   auth: {
+    //     user: process.env.EMAIL_USER,
+    //     pass: process.env.EMAIL_PASS,
+    //   },
+    // });
     const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+  host: "smtp.gmail.com",
+  port: 465,               // or 587 if STARTTLS
+  secure: true,            // true for 465, false for 587
+  auth: {
+    user: process.env.EMAIL_USER,  // your full Gmail address
+    pass: process.env.EMAIL_PASS,  // must be an App Password
+  },
+});
 
     const mailOptions = {
       from: `KGM Crackers <${process.env.EMAIL_USER}>`,
